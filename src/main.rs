@@ -41,7 +41,10 @@ async fn main() {
         .branch(
             dptree::case![State::ReceiveLocation { full_name, age }].endpoint(receive_location),
         ),
-    ).build();
+    )
+        .dependencies(dptree::deps![InMemStorage::<State>::new()])
+        .enable_ctrlc_handler()
+        .build();
     dispatcher.dispatch_with_listener(listener, teloxide::error_handlers::LoggingErrorHandler::new()).await;
 }
 
