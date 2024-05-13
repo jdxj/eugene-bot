@@ -12,4 +12,3 @@ pretty_env_logger = "0.4"
 tokio = { version = "1.37", features = ["rt-multi-thread", "macros"] }
 openssl = { version = "0.10", features = ["vendored"] }
 aria2-api = { git = "ssh://git@github.com/jdxj/aria2-api.git", branch = "dev" }
-dptree = "0.3"
