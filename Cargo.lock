@@ -398,6 +398,7 @@ name = "eugene-bot"
 version = "0.1.0"
 dependencies = [
  "aria2-api",
+ "dptree",
  "log",
  "openssl",
  "pretty_env_logger 0.4.0",

@@ -1,8 +1,12 @@
+use log::warn;
 use std::env;
-use teloxide::{prelude::*, utils::command::BotCommands, update_listeners::webhooks};
+use teloxide::{prelude::*, update_listeners::webhooks, utils::command::BotCommands};
 
 #[derive(BotCommands, Clone)]
-#[command(rename_rule = "lowercase", description = "These commands are supported:")]
+#[command(
+    rename_rule = "lowercase",
+    description = "These commands are supported:"
+)]
 enum Command {
     #[command(description = "display this text.")]
     Help,
@@ -14,23 +18,34 @@ enum Command {
 
 async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
     match cmd {
-        Command::Help => bot.send_message(msg.chat.id, Command::descriptions().to_string()).await?,
+        Command::Help => {
+            bot.send_message(msg.chat.id, Command::descriptions().to_string())
+                .await?
+        }
         Command::Username(username) => {
-            bot.send_message(msg.chat.id, format!("Your username is @{username}.")).await?
+            bot.send_message(msg.chat.id, format!("Your username is @{username}."))
+                .await?
         }
         Command::UsernameAndAge { username, age } => {
-            bot.send_message(msg.chat.id, format!("Your username is @{username} and age is {age}."))
-                .await?
+            bot.send_message(
+                msg.chat.id,
+                format!("Your username is @{username} and age is {age}."),
+            )
+            .await?
         }
     };
 
     Ok(())
 }
 
+struct MyStruct {
+    name: String,
+}
+
 #[tokio::main]
 async fn main() {
     pretty_env_logger::init();
-    log::info!("Starting ping-pong bot...");
+    log::info!("start");
 
     let bot = Bot::from_env();
 
@@ -40,6 +55,15 @@ async fn main() {
         .await
         .unwrap();
 
-    Command::repl_with_listener( bot, answer, listener).await
+    let handler = Update::filter_message()
+        .branch(dptree::entry().filter_command::<Command>().endpoint(answer));
+    Dispatcher::builder(bot, handler)
+        .default_handler(|upd| async move { warn!("Unhandled update: {:?}", upd) })
+        .enable_ctrlc_handler()
+        .build()
+        .dispatch_with_listener(
+            listener,
+            LoggingErrorHandler::with_custom_text("An error has occurred in the dispatcher"),
+        )
+        .await;
 }
-
