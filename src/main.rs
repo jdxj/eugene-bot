@@ -46,7 +46,8 @@ async fn answer(msg: Message, bot: Bot, cmd: Command, aria2c: Aria2Client) -> Re
             panic!("Download not implement");
         }
         Command::Aria2Version => {
-            // 阻止格式化
+            // The code below fails to compile.
+            //     the trait `Injectable<DependencyMap, _, _>` is not implemented ...
             // match aria2c.get_version().await {
             //     Ok(version) => {
             //         bot.send_message(msg.chat.id, format!("{}", version))
@@ -57,6 +58,7 @@ async fn answer(msg: Message, bot: Bot, cmd: Command, aria2c: Aria2Client) -> Re
             //         bot.send_message(msg.chat.id, "get version err").await?
             //     }
             // }
+            // The code below compiles.
             let version = aria2c.get_version().await.unwrap();
             bot.send_message(msg.chat.id, format!("{}", version))
                 .await?
