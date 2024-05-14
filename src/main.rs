@@ -1,7 +1,6 @@
 use aria2_api::Client as Aria2Client;
 use log::{debug, error, warn};
 use std::env;
-use std::sync::Arc;
 use teloxide::dptree::deps;
 use teloxide::{prelude::*, update_listeners::webhooks, utils::command::BotCommands};
 use tokio::sync::broadcast;
@@ -45,24 +44,16 @@ async fn answer(msg: Message, bot: Bot, cmd: Command, aria2c: Aria2Client) -> Re
         Command::Download(url) => {
             panic!("Download not implement");
         }
-        Command::Aria2Version => {
-            // The code below fails to compile.
-            //     the trait `Injectable<DependencyMap, _, _>` is not implemented ...
-            // match aria2c.get_version().await {
-            //     Ok(version) => {
-            //         bot.send_message(msg.chat.id, format!("{}", version))
-            //             .await?
-            //     }
-            //     Err(e) => {
-            //         error!("get version err: {:?}", e);
-            //         bot.send_message(msg.chat.id, "get version err").await?
-            //     }
-            // }
-            // The code below compiles.
-            let version = aria2c.get_version().await.unwrap();
-            bot.send_message(msg.chat.id, format!("{}", version))
-                .await?
-        }
+        Command::Aria2Version => match aria2c.get_version().await {
+            Ok(version) => {
+                bot.send_message(msg.chat.id, format!("{}", version))
+                    .await?
+            }
+            Err(e) => {
+                error!("get version err: {:?}", e);
+                bot.send_message(msg.chat.id, "get version err").await?
+            }
+        },
     };
 
     Ok(())
