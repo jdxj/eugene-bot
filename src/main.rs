@@ -41,17 +41,26 @@ async fn answer(msg: Message, bot: Bot, cmd: Command, aria2c: Aria2Client) -> Re
             )
             .await?
         }
-        Command::Download(url) => {
-            panic!("Download not implement");
-        }
+        Command::Download(url) => match aria2c.add_uri(&url).await {
+            Ok(gid) => {
+                let ok_msg = format!("gid: {}\nurl: {}", gid, url);
+                bot.send_message(msg.chat.id, ok_msg).await?
+            }
+            Err(e) => {
+                let err_msg = format!("download {} err: {:?}", url, e);
+                error!("{:?}", err_msg);
+                bot.send_message(msg.chat.id, err_msg).await?
+            }
+        },
         Command::Aria2Version => match aria2c.get_version().await {
             Ok(version) => {
                 bot.send_message(msg.chat.id, format!("{}", version))
                     .await?
             }
             Err(e) => {
-                error!("get version err: {:?}", e);
-                bot.send_message(msg.chat.id, "get version err").await?
+                let err_msg = format!("get version err: {:?}", e);
+                error!("{:?}", err_msg);
+                bot.send_message(msg.chat.id, err_msg).await?
             }
         },
     };
