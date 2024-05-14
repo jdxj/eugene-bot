@@ -18,10 +18,13 @@ enum Command {
     #[command(description = "handle a username and an age.", parse_with = "split")]
     UsernameAndAge { username: String, age: u8 },
 
-    #[command(description = "download http file")]
-    Download(String),
     #[command(description = "get aria2 version")]
     Aria2Version,
+
+    #[command(description = "download file, params: uri")]
+    Download(String),
+    #[command(description = "download status, params: gid")]
+    DownloadStatus(String),
 }
 
 async fn answer(msg: Message, bot: Bot, cmd: Command, aria2c: Aria2Client) -> ResponseResult<()> {
@@ -41,6 +44,17 @@ async fn answer(msg: Message, bot: Bot, cmd: Command, aria2c: Aria2Client) -> Re
             )
             .await?
         }
+        Command::Aria2Version => match aria2c.get_version().await {
+            Ok(version) => {
+                bot.send_message(msg.chat.id, format!("{}", version))
+                    .await?
+            }
+            Err(e) => {
+                let err_msg = format!("get version err: {:?}", e);
+                error!("{:?}", err_msg);
+                bot.send_message(msg.chat.id, err_msg).await?
+            }
+        },
         Command::Download(url) => match aria2c.add_uri(&url).await {
             Ok(gid) => {
                 let ok_msg = format!("gid: {}\nurl: {}", gid, url);
@@ -52,13 +66,13 @@ async fn answer(msg: Message, bot: Bot, cmd: Command, aria2c: Aria2Client) -> Re
                 bot.send_message(msg.chat.id, err_msg).await?
             }
         },
-        Command::Aria2Version => match aria2c.get_version().await {
-            Ok(version) => {
-                bot.send_message(msg.chat.id, format!("{}", version))
-                    .await?
+        Command::DownloadStatus(gid) => match aria2c.tell_status(&gid).await {
+            Ok(status) => {
+                let ok_msg = format!("{}", status);
+                bot.send_message(msg.chat.id, ok_msg).await?
             }
             Err(e) => {
-                let err_msg = format!("get version err: {:?}", e);
+                let err_msg = format!("get download status err: {:?}, gid: {}", e, gid);
                 error!("{:?}", err_msg);
                 bot.send_message(msg.chat.id, err_msg).await?
             }
